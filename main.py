@@ -7,7 +7,7 @@ from sklearn.metrics import confusion_matrix, roc_curve, precision_recall_curve,
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 import matplotlib.pyplot as plt
-
+print("hello")
 
 
 #1.1 Display first 8 rows, print out all columns in the dataset. List all caragorical variables in the answer.
