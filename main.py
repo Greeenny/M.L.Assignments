@@ -13,7 +13,8 @@ print("hello")
 #1.1 Display first 8 rows, print out all columns in the dataset. List all caragorical variables in the answer.
 df = pd.read_csv("drug.csv")
 
-print("The first 8 rows: \n",df.head(5))
+
+print("The first 5 rows: \n",df.head(5))
 print("\nThe columns: \n",df.columns.values)
 print("\nThe columns with catagorical variables: \n",df.select_dtypes(include=['object']).head())
 
