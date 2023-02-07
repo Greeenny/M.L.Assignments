@@ -31,12 +31,12 @@ pd.options.display.max_columns = 999
 
 # Create a dataframe of the standard deviations, then display the info.
 summary_of_standard_deviation_row = (summary.loc[["std"], :])
-#print(summary_of_standard_deviation_row)
-#print(f"The maximum and minimum of the standard deviations are: {summary_of_standard_deviation_row.T.max().values} {summary_of_standard_deviation_row.T.min().values} from the Value and Reputation features, respectively.")
+print(summary_of_standard_deviation_row)
+print(f"The maximum and minimum of the standard deviations are: {summary_of_standard_deviation_row.T.max().values} {summary_of_standard_deviation_row.T.min().values} from the Value and Reputation features, respectively.")
 
-# Create another summary dataframe, this time of age, to find the info asked.
+#Create another summary dataframe, this time of age, to find the info asked.
 summary_of_age_column = (summary.loc[:, ["Age"]])
-#print(f"The summary of the Age column is: {summary_of_age_column} and the max value is: {summary_of_age_column.loc['max', :].values}")
+print(f"The summary of the Age column is: {summary_of_age_column} and the max value is: {summary_of_age_column.loc['max', :].values}")
 
 # Question 1.4. Display in one plot and determine if any distributions are gaussian.
 df_with_only_numbers = df.select_dtypes(include=[np.number])
@@ -97,7 +97,7 @@ fourth_plot = sns.jointplot(x=df_transformed[0], y=df_transformed[2])
 fourth_plot.ax_joint.set_xlabel("Log Value")
 fourth_plot.ax_joint.set_ylabel("Overall")
 plt.show()
-'''
+#'''
 # Q1.9
 dfdummies['Transformed Value'] = df_transformed[0]
 dfdummies['Transformed Wage'] = df_transformed[1]
@@ -127,6 +127,7 @@ y = altered_data["Transformed Value"]
 X = altered_data.drop('Transformed Value', axis='columns')
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=seed)
+X_Train = np.c_[X_train,X_train**2,X_train**3] #Choose to do cubic regression.
 
 mean_squared_error_model = LinearRegression()
 mean_squared_error_model.fit(X_train, y_train)
@@ -141,22 +142,24 @@ mean_squared_error_test = mean_squared_error(y_test, mse_model_y_test_prediction
 #print(np.sqrt(mean_squared_error_train))
 
 # Q11 plotting scatters
-'''
+x_axis = np.linspace(min(X_test.Overall.values),max(X_test.Overall.values),len(mse_model_y_test_predictions))
 fig, axs = plt.subplots(1,2,sharey=True,sharex=True)
 axs = axs.ravel()
 true_plot = sns.scatterplot(X_test["Overall"],y_test,ax=axs[0])
 true_plot.set_title("True Plot")
+
+
 pred_plot = sns.scatterplot(X_test["Overall"],mse_model_y_test_predictions)
 pred_plot.set_title("Predicted Plot")
 plt.show()
-
+'''
 Calculate confidence interval (based on 99% confidence level) for mean Value by bootstrapping. For this purpose, code a 
 bootstrap function that in each bootstrap iteration, samples from the training set to fit the linear regression model 
 and uses the test set to make predictions - therefore your bootstrap statistic is the average of the predictions over 
 the test set. Your function must take as input arguments: your model, Xtrain, ytrain, Xtest, and numboot=100. 
 The function must return only one object that is the array of recorded values for the bootstrap statistic.
-'''
 
+'''
 def calculateBootstrapConfidence(model,Xtrain,ytrain,Xtest,numboot=100):
     np.random.seed(seed)
     bootstrapped_statistics = []
@@ -202,27 +205,44 @@ critical_value_99 = 2.576
 normal_confidence_interval = [(y_train.mean() - standard_error*critical_value_99).round(3),(y_train.mean() + standard_error * critical_value_99).round(3)]
 print("The normal confidence interval of the mean of the Value calculated via CLT is: ",normal_confidence_interval)
 print("The mean of the test is: ", y_test.mean())
+print("The mean of the train is: ",y_train.mean())
 
 #Q15
 def create_confidence_width_with_CLT(y_data,critical_value=2.576):
     n = len(y_data)
     standard_error = np.std(y_data)/np.sqrt(n)
-    normal_confidence_width = -(y_data.mean() - standard_error*critical_value)+(y_test.mean() + standard_error * critical_value)
+    normal_confidence_width = -(y_data.mean() - standard_error*critical_value)+(y_data.mean() + standard_error * critical_value)
     return(normal_confidence_width)
 
 sample_confidence_interval_list = []
 step_size = [5,10,30,50,100,200,500,1000,2000,4000,6000,8000,10000,12000,14000]
 for i in step_size:
-    sample_index = np.random.choice(i,i,replace=True)
+    sample_index = np.random.choice(len(y_train),i,replace=True)
     ytrain_sample = y_train.iloc[sample_index]
     sample_confidence_interval_list.append([i,create_confidence_width_with_CLT(ytrain_sample).mean()])#Append length of list and the y values so it makes plotting easier
-print(sample_confidence_interval_list)
+#print(sample_confidence_interval_list)
 df = pd.DataFrame(data=sample_confidence_interval_list,columns=["Sample Size","CI Widths"])
-print(df)
+#print(df)
 fig,ax=plt.subplots(figsize=(10,10))
 
 sns.barplot(data=df,x="Sample Size",y="CI Widths",ax=ax).set(title="Sample Size vs. Confidence Interval Widths")
-plt.show()
+#plt.show()
+
 #Here we see that, as we increase our sample size we get a better confidence interval, and after the sample size is greater than 20% we start to see diminishing returns on decreasing the width.
 
 
+sample_index = np.random.choice(len(y_train),size=30,replace=True)
+y_train_sample = y_train.iloc[sample_index]
+std_error = np.std(y_train_sample)/np.sqrt(30)
+
+alpha = (1/100)
+critical_value_99 =  1 - alpha/2
+dof = 29
+
+t_value = t.ppf(critical_value_99,df = dof)
+
+t_confidence_interval = [ (y_train_sample.mean() - std_error*t_value).round(3),(y_train_sample.mean() + std_error * t_value).round(3)]
+print("The t confidence interval is: ",t_confidence_interval)
+#Absolutely unneccessary. The data set is so huge that the student approximation is completely unneccesary, the t method should only be used for small data sets.
+
+#Q17 Given th
